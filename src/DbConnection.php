@@ -16,9 +16,8 @@ Class DbConnection {
 
 
 
-
 $conn = DbConnection::getConnection();
 
 if ($conn == false) {
-    echo 'Brak połączenia';
+    die ('Brak połączenia');
 }
