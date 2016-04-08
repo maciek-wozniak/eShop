@@ -1,9 +1,9 @@
 {
-    "name": "mw/e-shop",
+    "name": "root/e-shop",
     "authors": [
         {
-            "name": "Maciej Wozniak",
-            "email": "maciek_wozniak@o2.pl"
+            "name": "Jakub Pawelczak",
+            "email": "jakub.pawelczak.pl@gmail.com"
         }
     ],
     "require": {},

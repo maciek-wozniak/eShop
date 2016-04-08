@@ -126,22 +126,28 @@ class Product{
     public function addProduct(mysqli $conn)
     {
         if($this->id === -1) {
-            $addProductQuery = "INSERT INTO product(name, description, price, quantity) VALUES(
-                                {$this->getName()},
-                                {$this->getDescription()},
-                                {$this->getPrice()},
-                                {$this->getQuantity()}
+            $addProductQuery = "INSERT INTO product(name, description, price, quantity, is_deleted)
+                          VALUES(
+                                '{$this->getName()}',
+                                '{$this->getDescription()}',
+                                '{$this->getPrice()}',
+                                '{$this->getQuantity()}',
+                                '{$this->getIsDeleted()}'
                                 )";
 
             $result = $conn->query($addProductQuery);
+
             if($result === TRUE) {
                 $this->id = $conn->insert_id;
+            } else {
+                return $conn->errno;
             }
+
+            $conn->close();
+            $conn = null;
+
+            return true;
         }
-
-        $conn->close();
-        $conn = null;
-
         return false;
     }
 
@@ -208,14 +214,3 @@ class Product{
         return false;
     }
 }
-
-$product1 = new Product();
-$product1->setName("jablko");
-$product1->setDescription("dobre jablko");
-$product1->setPrice(10);
-$product1->setQuantity(100);
-
-$show = $product1->showProduct();
-echo $show;
-
-var_dump($product1);

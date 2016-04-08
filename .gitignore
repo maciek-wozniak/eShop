@@ -1,4 +1,5 @@
-.idea/*
-vendor/*
+.idea
+phpunit.xml
+vendor
 composer.lock
 src/Config.php
