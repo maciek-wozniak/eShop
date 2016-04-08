@@ -1,0 +1,14 @@
+{
+    "name": "mw/e-shop",
+    "authors": [
+        {
+            "name": "Maciej Wozniak",
+            "email": "maciek_wozniak@o2.pl"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "4.8.*",
+        "phpunit/dbunit": ">=1.2"
+    }
+}
