@@ -1,5 +1,6 @@
 <?php
 
+require_once 'DbConnection.php';
 
 Class Admin {
     private $id;
