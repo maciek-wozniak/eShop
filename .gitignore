@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 .idea/*
 vendor/*
 composer.lock
 src/Config.php
 phpunit.xml
+=======
+.idea
+phpunit.xml
+vendor
+composer.lock
+src/Config.php
+>>>>>>> 3a9997bb522a54a8853f9197f9162baf81ca3c38

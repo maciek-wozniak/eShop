@@ -1,0 +1,4 @@
+name,description,price,quantity,is_deleted
+'apple','large apple from Poland',10,100,0
+'potato','large potates from the US,5,50,0
+'flower','nice red flower',2,20,1

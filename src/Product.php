@@ -51,6 +51,10 @@ class Product{
         $this->isDeleted = 0;
     }
 
+    public function addConnection(mysqli $newConn){
+        $this->conn = $newConn;
+    }
+
     public function getId()
     {
         return $this->id;
@@ -58,7 +62,12 @@ class Product{
 
     public function setName($newName)
     {
-        $this->name = $newName;
+        //TODO:: check why this condition doesn't stop the script
+        if(strlen($newName) > 0){
+            $this->name = $newName;
+        }
+
+        return false;
     }
 
     public function getName()
@@ -78,9 +87,10 @@ class Product{
 
     public function setPrice($newPrice)
     {
-        if(is_numeric($newPrice) && $newPrice >= 0) {
+        if($newPrice >= 0) {
             $this->price = $newPrice;
         }
+        return false;
     }
 
     public function getPrice()
@@ -90,7 +100,7 @@ class Product{
 
     public function setQuantity($newQuantity)
     {
-        if(is_numeric($newQuantity) && $newQuantity >= 0) {
+        if($newQuantity >= 0) {
             $this->quantity = $newQuantity;
         } else {
             throw new Exception("Quantity has to be >= 0");
@@ -125,29 +135,35 @@ class Product{
     //having the object, call addProduct method to save it to DB
     public function addProduct(mysqli $conn)
     {
-        if($this->id === -1) {
-            $addProductQuery = "INSERT INTO product(name, description, price, quantity) VALUES(
-                                {$this->getName()},
-                                {$this->getDescription()},
-                                {$this->getPrice()},
-                                {$this->getQuantity()}
+        if($this->getName() != null) {
+            if ($this->id === -1) {
+                $addProductQuery = "INSERT INTO product(name, description, price, quantity, is_deleted)
+                          VALUES(
+                                '{$this->getName()}',
+                                '{$this->getDescription()}',
+                                '{$this->getPrice()}',
+                                '{$this->getQuantity()}',
+                                '{$this->getIsDeleted()}'
                                 )";
 
-            $result = $conn->query($addProductQuery);
-            if($result === TRUE) {
-                $this->id = $conn->insert_id;
+                $result = $conn->query($addProductQuery);
+
+                if ($result === TRUE) {
+                    $this->id = $conn->insert_id;
+
+                    $conn->close();
+                    $conn = null;
+
+                    return $result;
+                }
             }
         }
-
-        $conn->close();
-        $conn = null;
-
         return false;
     }
 
     public function updateProduct(mysqli $conn)
     {
-        if($this->id === -1) {
+        if(isset($this->id)) {
             $updateProductQuery = "UPDATE product SET
                                 name={$this->getName()},
                                 description={$this->getDescription()},
@@ -159,13 +175,13 @@ class Product{
 
             $result = $conn->query($updateProductQuery);
             if($result === TRUE) {
+
+                $conn->close();
+                $conn = null;
+
                 return true;
             }
         }
-
-        $conn->close();
-        $conn = null;
-
         return false;
     }
 
@@ -183,6 +199,7 @@ class Product{
                 $this->setDescription($row['description']);
                 $this->setPrice($row['price']);
                 $this->setQuantity($row['quantity']);
+                $this->setIsDeleted($row['is_deleted']);
             }
         }
         $conn->close();
@@ -208,14 +225,3 @@ class Product{
         return false;
     }
 }
-
-$product1 = new Product();
-$product1->setName("jablko");
-$product1->setDescription("dobre jablko");
-$product1->setPrice(10);
-$product1->setQuantity(100);
-
-$show = $product1->showProduct();
-echo $show;
-
-var_dump($product1);
