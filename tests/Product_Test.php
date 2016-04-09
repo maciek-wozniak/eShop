@@ -102,7 +102,7 @@ class Product_Test extends PHPUnit_Extensions_Database_TestCase
         $isAddedProduct->setPrice('-1');
         $isAddedProduct->setQuantity('100');
         $isAddedProduct->setIsDeleted('0');
-        $this->assertSame("wrong data", $isAddedProduct->addProduct($this->mysqliConn));
+        $this->assertSame(false, $isAddedProduct->addProduct($this->mysqliConn));
 
         //testing adding product with Quantity < 0
         $isAddedProduct->setPrice('1');

@@ -135,7 +135,7 @@ class Product{
     //having the object, call addProduct method to save it to DB
     public function addProduct(mysqli $conn)
     {
-        if($this->getName() != null) {
+        if($this->getName() != null && $this->getPrice()>0) {
             if ($this->id === -1) {
                 $addProductQuery = "INSERT INTO product(name, description, price, quantity, is_deleted)
                           VALUES(
