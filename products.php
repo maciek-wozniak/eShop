@@ -1,6 +1,5 @@
 <?php
 require_once "./src/Product.php";
-require_once "./src/DbConnection.php";
 
 if($_SERVER['REQUEST_METHOD'] == "POST") {
     $productName = $_POST['productName'];
@@ -26,8 +25,6 @@ if($_SERVER['REQUEST_METHOD'] == "POST") {
     } else {
         echo "Error with adding product to DB".$conn->error;
     }
-
-    var_dump($_POST);
 }
 ?>
 
@@ -37,14 +34,14 @@ if($_SERVER['REQUEST_METHOD'] == "POST") {
 </head>
 <body>
 
-<form action="#" method="post">
-    <lable>
+<form action="#" method="post" id="addProduct">
+    <lable id="addProduct">
         Product name:
         <input type="text" name="productName">
     </lable>
     <lable>
         Product description:
-        <textarea name="productDescription" rows="4" cols="40"></textarea>
+        <textarea name="productDescription" id="addProduct" form="addProduct" rows="4" cols="40"></textarea>
     </lable>
     <label>
         Product price:
