@@ -1,0 +1,5 @@
+id,name,surname,email,password,is_deleted
+1,"user1","sruname1","user1@user.pl","$2y$11$3fd6R1dijalg54ZbriahwuJq8Dzq2MG9MxHRxrZO6GA9hCM.HhmBS",0
+2,"user2","sruname2","user2@user.pl","$2y$11$oEhnLTVGDrc92MAa1G1GHugMz2NmUoOoKC/fFM4bVMFaY0XW72qr.",0
+3,"user3","sruname3","user3@user.pl",$2y$11$pUOM.kgsOddbJ9E2U6N/oujWuZFlq456JlTI5d/SQyQU2.H3GT.Qq",0
+4,"user4","sruname4","user4@user.pl",$2y$11$q0Nr51mmNaJErHk8BAqMI.21KXw3hI7nMIu6/z9QYP9SPXLfFVmQK,0

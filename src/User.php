@@ -17,10 +17,10 @@ Class User {
     }
 
     public function setName($name) {
-        if (is_string($name) && strlen($name) > 2) {
-            $this->name = $name;
+        if (!is_string($name) || strlen($name) < 3) {
+            throw new Exception('Wrong user name');
         }
-        throw new Exception('Wrong user name');
+        $this->name = $name;
     }
 
     public function getSurname() {
@@ -28,10 +28,10 @@ Class User {
     }
 
     public function setSurname($surname) {
-        if (is_string($surname) && strlen($surname) > 2) {
-            $this->surname = $surname;
+        if (!is_string($surname) || strlen($surname) < 3) {
+            throw new Exception('Wrong user surname');
         }
-        throw new Exception('Wrong user surname');
+        $this->surname = $surname;
     }
 
     public function getEmail() {
@@ -39,10 +39,10 @@ Class User {
     }
 
     public function setEmail($email) {
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->email = $email;
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Wrong email address');
         }
-        throw new Exception('Wrong email address');
+        $this->email = $email;
     }
 
     public function getIsDeleted() {
@@ -50,10 +50,10 @@ Class User {
     }
 
     public function setIsDeleted($isDeleted) {
-        if (in_array($isDeleted, [0, 1, true, false])) {
-            $this->isDeleted = $isDeleted;
+        if (!in_array($isDeleted, [0, 1, true, false])) {
+            throw new Exception('Wrong value');
         }
-        throw new Exception('Wrong value');
+        $this->isDeleted = $isDeleted;
     }
 
     public function __construct() {
@@ -64,13 +64,21 @@ Class User {
         $this->isDeleted = -1;
     }
 
-    public function addUser(mysqli $conn) {
+    public function addUser(mysqli $conn, $password) {
         if ($this->getId() == -1) {
             if ($this->getEmail() == '' || $this->getName() == '' || $this->getSurname() == '') {
                 throw new Exception('Missing user data');
             }
-            $sql = 'INSERT INTO users (email, name, surname) VALUES
-              ("'.$this->getEmail().'", "'.$this->getName().'", "'.$this->getSurname().'")';
+
+            $password = self::hashPassword($password);
+
+            $sql = 'INSERT INTO user (email, name, surname, password) VALUES
+              ("'.$this->getEmail().'", "'.$this->getName().'", "'.$this->getSurname().'", "'.$password.'")';
+            $result =  $conn->query($sql);
+            if ($result === true) {
+                $this->id = $conn->insert_id;
+            }
+            return $result;
         }
         throw new Exception('User already registered');
     }
@@ -80,7 +88,11 @@ Class User {
             throw new Exception('Wrong email address');
         }
 
-        $sql = 'SELECT id FROM users WHERE id='.$this->getId();
+        if (!is_string($name) || !is_string($surname)) {
+            throw new Exception('Wrong data');
+        }
+
+        $sql = 'SELECT id FROM user WHERE id='.$this->getId();
         $result = $conn->query($sql);
         if ($result->num_rows !=1) {
             throw new Exception('Fatal error, no such user');
@@ -90,26 +102,24 @@ Class User {
             throw new Exception('You can only update yourself!');
         }
 
-        $sqlIsUser = 'SELECT email FROM users WHERE deleted=0 AND email="'.$mail.'" ';
+        $sqlIsUser = 'SELECT email FROM user WHERE is_deleted=0 AND email="'.$mail.'" ';
         $result = $conn->query($sqlIsUser);
         if ($result->num_rows == 1 && !($this->email == $mail)) {
             throw new Exception('Email address already taken');
 
         }
-        $sqlIsUser = 'SELECT * FROM users WHERE deleted=0 AND (email="'.$mail.'" OR id="'.$this->userId.'") ';
+        $sqlIsUser = 'SELECT * FROM user WHERE is_deleted=0 AND (email="'.$mail.'" OR id="'.$this->getId().'") ';
         $result = $conn->query($sqlIsUser);
         if ($result->num_rows != 1) {
             throw new Exception('Something went wrong');
         }
-        $updateUserQuery = 'UPDATE users SET surname="'.$surname.'", name="'.$name.'", email="'.$mail
-                                .'" WHERE id="'.$this->userId.'"';
+        $updateUserQuery = 'UPDATE user SET surname="'.$surname.'", name="'.$name.'", email="'.$mail
+                                .'" WHERE id="'.$this->getId().'"';
         $result = $conn->query($updateUserQuery);
         if ($result) {
-            unset($_SESSION['user']);
             $this->setEmail($mail);
             $this->setSurname($surname);
             $this->setName($name);
-            $_SESSION['user'] = $this;
         }
         return $result;
     }
@@ -122,7 +132,11 @@ Class User {
             throw new Exception('Confirm password dont match new password');
         }
 
-        $getUserQuery = 'SELECT * FROM users WHERE deleted=0 AND id=' . $this->getId();
+        if (!is_string($newPassword) || !is_string($oldPassword)) {
+            throw new Exception('Not supported data type');
+        }
+
+        $getUserQuery = 'SELECT * FROM user WHERE is_deleted=0 AND id=' . $this->getId();
         $result = $conn->query($getUserQuery);
         if ($result->num_rows == 1) {
             $user = $result->fetch_assoc();
@@ -130,26 +144,36 @@ Class User {
                 throw new Exception('Wrong password');
             }
 
-            $hashedNewPassword = $this->hashPassword($newPassword);
-            $updateUserQuery = 'UPDATE users SET password="' . $hashedNewPassword . '" WHERE id="' . $this->getId() . '"';
+            $hashedNewPassword = self::hashPassword($newPassword);
+            $updateUserQuery = 'UPDATE user SET password="' . $hashedNewPassword . '" WHERE id="' . $this->getId() . '"';
             return $conn->query($updateUserQuery);
         }
         throw new Exception('Somethig went wrong');
     }
 
     public function deleteUser(mysqli $conn) {
-        $sql = 'UPDATE user SET is_deleted=1 WHERE id='.$this->getId();
+        if ($this->getId() < 1) {
+            throw new Exception('User doesnt exists');
+        }
+
+        $sql = 'SELECT id FROM user WHERE is_deleted=0 AND id='.$this->getId();
+        $result = $conn->query($sql);
+        if ($result->num_rows != 1) {
+            throw new Exception('User doesnt exists');
+        }
+
+        $sql = 'UPDATE user SET is_deleted=1 WHERE id=' . $this->getId();
         return $conn->query($sql);
     }
 
-    public function loadUserFromDb(mysqli $conn, $userId, $onlyWhenNotDeleted = null) {
+    static public function LoadUserFromDb(mysqli $conn, $userId, $onlyWhenNotDeleted = null) {
         if (!is_numeric($userId) || $userId < 1) {
             throw new Exception('Wrong user id');
         }
 
-        $sql = 'SELECT * FROM users WHERE id='.$userId;
+        $sql = 'SELECT * FROM user WHERE id='.$userId;
         if ($onlyWhenNotDeleted === true) {
-            $sql .= ' AND deleted=0';
+            $sql .= ' AND is_deleted=0';
         }
         $result = $conn->query($sql);
         if ($result->num_rows == 1) {
@@ -167,12 +191,12 @@ Class User {
         throw new Exception('Something went wrong');
     }
 
-    public function logInUser(mysqli $conn, $email, $password) {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !is_string($password) || strlen($password) < 3) {
+    public function logInUser(mysqli $conn, $password) {
+        if (!filter_var($this->getEmail(), FILTER_VALIDATE_EMAIL) || !is_string($password) || strlen($password) < 3) {
             throw new Exception('Wrong email address or password');
         }
 
-        $sqlUser = 'SELECT * FROM users WHERE is_deleted=0 AND email='.$email;
+        $sqlUser = 'SELECT * FROM user WHERE is_deleted=0 AND email="'.$this->getEmail().'"';
         $result = $conn->query($sqlUser);
         if ($result->num_rows == 1) {
             $row = $result->fetch_assoc();
@@ -193,10 +217,6 @@ Class User {
         throw new Exception('No user in DB');
     }
 
-    public function logOutUser() {
-        unset($_SESSION['user']);
-    }
-
     public function getUserOrders(mysqli $conn) {
         //return Address::GetUserOrders($conn, $this->getId()); <-- TO IMPLEMENT
     }
@@ -207,9 +227,9 @@ Class User {
 
     static public function GetAllUsers(mysqli $conn, $selectAlsoDeletedUsers = null) {
         $allUsers = [];
-        $sql = 'SELECT * FROM users';
+        $sql = 'SELECT * FROM user';
         if ($selectAlsoDeletedUsers !== true) {
-            $sql .= ' WHERE is_deleter=0';
+            $sql .= ' WHERE is_deleted=0';
         }
 
         $result = $conn->query($sql);
@@ -228,7 +248,7 @@ Class User {
         return $allUsers;
     }
 
-    private function hashPassword($password) {
+    static public function hashPassword($password) {
         $options = array(
             'cost' => 11,
             'salt' => mcrypt_create_iv(22, MCRYPT_DEV_URANDOM)
