@@ -5,6 +5,7 @@ require_once (dirname(__FILE__).'/../src/Admin.php');
 Class Admin_Test extends PHPUnit_Extensions_Database_TestCase {
     static private $pdo = null;
     private $conn = null;
+    private $mySqli;
     private $admin;
 
     protected function getConnection() {
@@ -23,8 +24,33 @@ Class Admin_Test extends PHPUnit_Extensions_Database_TestCase {
         return $dataSet;
     }
 
+    protected function setUp() {
+        parent::setUp();
+        if ($this->mySqli === null) {
+            $this->mySqli = new mysqli('localhost', $GLOBALS['DB_USER'], $GLOBALS['DB_PASSWD'],  $GLOBALS['DB_DBNAME']);
+        }
+        $this->admin = new Admin();
+    }
+    protected function tearDown() {
+        parent::tearDown();
+        $this->admin = null;
+    }
 
-    public function testTrue() {
-        $this->assertTrue(true);
+    public function testAddAdmin() {
+        $admin = new Admin();
+
+        // $this->setExpectedException('Exception');
+        // $admin->addAdmin($this->mySqli, 'ala ma kota');
+
+        try {
+            $admin->addAdmin($this->mySqli, 'ala ma kota');
+        }
+        catch (Exception $e) {
+            $this->assertSame('Bad admin id', $e->getMessage());
+            return;
+        }
+
+        $this->fail('Expected Exception is not thrown');
+
     }
 }
