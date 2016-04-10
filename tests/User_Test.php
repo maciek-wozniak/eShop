@@ -568,8 +568,36 @@ Class User_Test extends PHPUnit_Extensions_Database_TestCase {
         $user->logInUser($this->mySqli, -1);
     }
 
-    public function testGetAllUsers() {
+    public function testGetAllUsers1() {
         $users = User::GetAllUsers($this->mySqli);
+        $this->assertTrue(is_array($users));
+        $this->assertInstanceOf('User', $users[0]);
+
+        foreach ($users as $user) {
+            if ($user->getId() == 4) {
+                $this->assertSame('user4', $user->getName());
+                $this->assertSame('sruname4', $user->getSurname());
+                $this->assertSame('user4@user.pl', $user->getEmail());
+            }
+        }
+    }
+
+    public function testGetAllUsers2() {
+        User::LoadUserFromDb($this->mySqli, 4)->deleteUser($this->mySqli);
+        $users = User::GetAllUsers($this->mySqli);
+        $this->assertTrue(is_array($users));
+        $this->assertInstanceOf('User', $users[0]);
+
+        foreach ($users as $user) {
+            if ($user->getId() == 4) {
+                $this->fail('User is deleted');
+            }
+        }
+    }
+
+    public function testGetAllUsers3() {
+        User::LoadUserFromDb($this->mySqli, 4)->deleteUser($this->mySqli);
+        $users = User::GetAllUsers($this->mySqli, true);
         $this->assertTrue(is_array($users));
         $this->assertInstanceOf('User', $users[0]);
 
